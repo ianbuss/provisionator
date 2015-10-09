@@ -1,0 +1,171 @@
+{
+  "cm" : {
+    "host" : "kudu1.hadoop.dev",
+    "user" : "admin",
+    "password" : "admin",
+    "ssl" : false,
+    "config" : {
+      "REMOTE_PARCEL_REPO_URLS" : "http://services-vm.dev/parcels/cdh/5.4.7/"
+    }
+  },
+  "mgmt" : {
+    "config" : {
+    },
+    "services" : [
+      {
+        "name" : "ALERTPUBLISHER",
+        "config" : {
+            "alert_heapsize" : "67108864"
+        }
+      },
+      { 
+        "name" : "EVENTSERVER",
+        "config" : {
+          "event_server_heapsize" : "268435456"
+        }
+      },
+      {
+        "name" : "REPORTSMANAGER",
+        "config" : {
+          "headlamp_database_host" : "kudu1.hadoop.dev:7432",
+          "headlamp_database_name" : "rman",
+          "headlamp_database_password" : "EVuNRxSrXY",
+          "headlamp_database_type" : "postgresql",
+          "headlamp_database_user" : "rman",
+          "headlamp_heapsize" : "557842432"
+        }
+      },
+      {
+        "name" : "SERVICEMONITOR",
+        "config" : {
+          "firehose_heapsize" : "268435456",
+          "firehose_non_java_memory_bytes" : "805306368"
+        }
+      },
+      {
+        "name" : "HOSTMONITOR",
+        "config" : {
+          "firehose_heapsize" : "268435456",
+          "firehose_non_java_memory_bytes" : "805306368"
+        }
+      }
+    ]
+  },
+  "cluster" : {
+    "name" : "Flibber",
+    "version" : "5.4.7",
+    "hosts" : [
+      "kudu1.hadoop.dev",
+      "kudu2.hadoop.dev",
+      "kudu3.hadoop.dev"
+    ],
+    "services" : [
+      {
+        "name" : "ZooKeeper",
+        "type" : "ZOOKEEPER",
+        "roles" : [
+          {
+            "type" : "SERVER",
+            "hosts" : [ "kudu1.hadoop.dev" ],
+            "config" : {
+              "dataDir" : "/cloudera/var/lib/zookeeper",
+              "dataLogDir" : "/cloudera/var/lib/zookeeper",
+              "zookeeper_server_java_heapsize" : "268435456"
+            } 
+          }
+        ]
+      },
+      {
+        "name" : "HDFS",
+        "type" : "HDFS",
+        "config" : {
+
+        },
+        "roles" : [
+          {
+            "type" : "NAMENODE",
+            "hosts" : [ "kudu1.hadoop.dev" ],
+            "config" : {
+              "dfs_name_dir_list" : "/cloudera/dfs/nn",
+              "namenode_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "SECONDARYNAMENODE",
+            "hosts" : [ "kudu1.hadoop.dev" ],
+            "config" : {
+              "fs_checkpoint_dir_list" : "/cloudera/dfs/snn",
+              "secondary_namenode_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "DATANODE",
+            "hosts" : [ 
+              "kudu1.hadoop.dev",
+              "kudu2.hadoop.dev",
+              "kudu3.hadoop.dev"
+            ],
+            "config" : {
+              "dfs_data_dir_list" : "/cloudera/dfs/dn",
+              "datanode_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "GATEWAY",
+            "hosts" : [ 
+              "kudu1.hadoop.dev",
+              "kudu2.hadoop.dev",
+              "kudu3.hadoop.dev"
+            ],
+            "config" : {
+              "dfs_client_use_trash" : "true"
+            }
+          }
+        ]
+      },
+      {
+        "name" : "YARN",
+        "type" : "YARN",
+        "config" : {
+          "hdfs_service" : "HDFS"
+        },
+        "roles" : [
+          {
+            "type" : "RESOURCEMANAGER",
+            "hosts" : [ "kudu1.hadoop.dev" ],
+            "config" : {
+              "resource_manager_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "NODEMANAGER",
+            "hosts" : [ 
+              "kudu1.hadoop.dev",
+              "kudu2.hadoop.dev",
+              "kudu3.hadoop.dev"
+            ],
+            "config" : {
+              "yarn_nodemanager_local_dirs" : "/cloudera/yarn/nm",
+              "node_manager_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "JOBHISTORY",
+            "hosts" : [ "kudu1.hadoop.dev" ],
+            "config" : {
+              "mr2_jobhistory_java_heapsize" : "268435456"
+            }
+          },
+          {
+            "type" : "GATEWAY",
+            "hosts" : [ 
+              "kudu1.hadoop.dev",
+              "kudu2.hadoop.dev",
+              "kudu3.hadoop.dev"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
