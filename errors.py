@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # (c) Copyright 2015 Cloudera, Inc.
 #
@@ -12,3 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+class ProvisionatorException(Exception):
+
+    def __init__(self, error):
+        self._error = error
+
+    def __str__(self):
+        res = self._error or ""
+        res = "ProvisionatorException: %s" % res
+        return res

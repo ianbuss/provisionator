@@ -1,6 +1,6 @@
 {
   "cm" : {
-    "host" : "kudu1.hadoop.dev",
+    "host" : "provtest1.hadoop.dev",
     "user" : "admin",
     "password" : "admin",
     "ssl" : false,
@@ -27,37 +27,37 @@
       {
         "name" : "REPORTSMANAGER",
         "config" : {
-          "headlamp_database_host" : "kudu1.hadoop.dev:7432",
+          "headlamp_database_host" : "provtest1.hadoop.dev:7432",
           "headlamp_database_name" : "rman",
-          "headlamp_database_password" : "EVuNRxSrXY",
+          "headlamp_database_password" : "WPjRlZ4o4m",
           "headlamp_database_type" : "postgresql",
           "headlamp_database_user" : "rman",
-          "headlamp_heapsize" : "557842432"
+          "headlamp_heapsize" : "268435456"
         }
       },
       {
         "name" : "SERVICEMONITOR",
         "config" : {
-          "firehose_heapsize" : "268435456",
+          "firehose_heapsize" : "536870912",
           "firehose_non_java_memory_bytes" : "805306368"
         }
       },
       {
         "name" : "HOSTMONITOR",
         "config" : {
-          "firehose_heapsize" : "268435456",
+          "firehose_heapsize" : "536870912",
           "firehose_non_java_memory_bytes" : "805306368"
         }
       }
     ]
   },
   "cluster" : {
-    "name" : "Flibber",
+    "name" : "Provisionator Test Cluster",
     "version" : "5.4.7",
     "hosts" : [
-      "kudu1.hadoop.dev",
-      "kudu2.hadoop.dev",
-      "kudu3.hadoop.dev"
+      "provtest1.hadoop.dev",
+      "provtest2.hadoop.dev",
+      "provtest3.hadoop.dev"
     ],
     "services" : [
       {
@@ -66,7 +66,7 @@
         "roles" : [
           {
             "type" : "SERVER",
-            "hosts" : [ "kudu1.hadoop.dev" ],
+            "hosts" : [ "provtest1.hadoop.dev" ],
             "config" : {
               "dataDir" : "/cloudera/var/lib/zookeeper",
               "dataLogDir" : "/cloudera/var/lib/zookeeper",
@@ -84,7 +84,7 @@
         "roles" : [
           {
             "type" : "NAMENODE",
-            "hosts" : [ "kudu1.hadoop.dev" ],
+            "hosts" : [ "provtest1.hadoop.dev" ],
             "config" : {
               "dfs_name_dir_list" : "/cloudera/dfs/nn",
               "namenode_java_heapsize" : "268435456"
@@ -92,7 +92,7 @@
           },
           {
             "type" : "SECONDARYNAMENODE",
-            "hosts" : [ "kudu1.hadoop.dev" ],
+            "hosts" : [ "provtest2.hadoop.dev" ],
             "config" : {
               "fs_checkpoint_dir_list" : "/cloudera/dfs/snn",
               "secondary_namenode_java_heapsize" : "268435456"
@@ -101,9 +101,9 @@
           {
             "type" : "DATANODE",
             "hosts" : [ 
-              "kudu1.hadoop.dev",
-              "kudu2.hadoop.dev",
-              "kudu3.hadoop.dev"
+              "provtest1.hadoop.dev",
+              "provtest2.hadoop.dev",
+              "provtest3.hadoop.dev"
             ],
             "config" : {
               "dfs_data_dir_list" : "/cloudera/dfs/dn",
@@ -113,9 +113,9 @@
           {
             "type" : "GATEWAY",
             "hosts" : [ 
-              "kudu1.hadoop.dev",
-              "kudu2.hadoop.dev",
-              "kudu3.hadoop.dev"
+              "provtest1.hadoop.dev",
+              "provtest2.hadoop.dev",
+              "provtest3.hadoop.dev"
             ],
             "config" : {
               "dfs_client_use_trash" : "true"
@@ -132,7 +132,7 @@
         "roles" : [
           {
             "type" : "RESOURCEMANAGER",
-            "hosts" : [ "kudu1.hadoop.dev" ],
+            "hosts" : [ "provtest3.hadoop.dev" ],
             "config" : {
               "resource_manager_java_heapsize" : "268435456"
             }
@@ -140,9 +140,9 @@
           {
             "type" : "NODEMANAGER",
             "hosts" : [ 
-              "kudu1.hadoop.dev",
-              "kudu2.hadoop.dev",
-              "kudu3.hadoop.dev"
+              "provtest1.hadoop.dev",
+              "provtest2.hadoop.dev",
+              "provtest3.hadoop.dev"
             ],
             "config" : {
               "yarn_nodemanager_local_dirs" : "/cloudera/yarn/nm",
@@ -151,7 +151,7 @@
           },
           {
             "type" : "JOBHISTORY",
-            "hosts" : [ "kudu1.hadoop.dev" ],
+            "hosts" : [ "provtest2.hadoop.dev" ],
             "config" : {
               "mr2_jobhistory_java_heapsize" : "268435456"
             }
@@ -159,9 +159,9 @@
           {
             "type" : "GATEWAY",
             "hosts" : [ 
-              "kudu1.hadoop.dev",
-              "kudu2.hadoop.dev",
-              "kudu3.hadoop.dev"
+              "provtest1.hadoop.dev",
+              "provtest2.hadoop.dev",
+              "provtest3.hadoop.dev"
             ]
           }
         ]

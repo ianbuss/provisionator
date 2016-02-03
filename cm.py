@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # (c) Copyright 2015 Cloudera, Inc.
 #
@@ -12,3 +14,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+def update_config(config, api):
+    cm = api.get_cloudera_manager()
+
+    # Update CM config
+    if 'config' in config['cm']:
+        cm.update_config(config['cm']['config'])
+
+
+def update_license(config, api):
+    cm = api.get_cloudera_manager()
+
+    # Update license
+    if 'license' in config['cm']:
+        cm.update_license(config['cm']['license'])
+
+
+def update_hosts_config(config, api):
+    cm = api.get_cloudera_manager()
+
+    # Update license
+    if 'hostsconfig' in config:
+        cm.update_all_hosts_config(config['hostsconfig'])
