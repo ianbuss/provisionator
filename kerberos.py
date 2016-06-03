@@ -18,6 +18,7 @@
 
 import logging
 import sys
+import time
 
 from cm_api.api_client import ApiException
 
@@ -28,13 +29,15 @@ import util
 from errors import ProvisionatorException
 
 LOG = logging.getLogger(__name__)
+logging.basicConfig()
+LOG.setLevel(logging.INFO)
 DATANODE_TRANSCEIVER_PORT = 1004
 DATANODE_WEB_PORT = 1006
 
 
 def check_creds(user, passwd):
     # Sanity check KDC credentials
-    if '@' in user:
+    if not '@' in user:
         raise ProvisionatorException("Supplied KDC account username contains '@")
     elif len(passwd) == 0:
         raise ProvisionatorException("Supplied KDC account password is empty")
@@ -43,7 +46,7 @@ def check_creds(user, passwd):
 def enable_kerberos(conf):
     try:
         # Open a connection to CM and get a CM object
-        api = util.get_api_handle(config)
+        api = util.get_api_handle(conf)
         cm = api.get_cloudera_manager()
         cl = None
         if 'cluster' in conf and 'name' in conf['cluster']:
@@ -52,14 +55,15 @@ def enable_kerberos(conf):
             raise ProvisionatorException("No cluster specified")
 
         # Check the HDFS service to see if Kerberos is already enabled
-        hdfs_svc_name = config.get_cluster_service_by_type(conf, 'HDFS')
-        hdfs = cl.get_service(hdfs_svc_name)
+        hdfs_svc = config.get_cluster_service_by_type(conf, 'HDFS')
+        hdfs = cl.get_service(hdfs_svc['name'])
         hdfs_cfg, hdfs_roletype_cfg = hdfs.get_config(view='full')
 
         if not hdfs_cfg['hadoop_security_authentication'].value == 'kerberos':
             # Kerberos has not been enabled - add the KDC creds
-            if 'kdc_user' in conf['cm'] and 'kdc_pass' in config['cm']:
+            if 'kdc_user' in conf['cm'] and 'kdc_pass' in conf['cm']:
                 check_creds(conf['cm']['kdc_user'], conf['cm']['kdc_pass'])
+                LOG.info("Importing credentials for administrative account")
                 cmd = cm.import_admin_credentials(conf['cm']['kdc_user'], conf['cm']['kdc_pass'])
                 util.wait_for_command(cmd, True)
 
@@ -73,10 +77,19 @@ def enable_kerberos(conf):
                 datanode_transceiver_port=4004
                 datanode_web_port=4006
 
+            LOG.info("Running Kerberos configuration now...")
             cmd = cl.configure_for_kerberos(datanode_transceiver_port=datanode_transceiver_port,
                                             datanode_web_port=datanode_web_port)
+
             util.wait_for_command(cmd, True)
-            mgmt.restart(cm)
+            #TODO: in some cases time.sleep(x) is needed to avoid race conditions
+            try:
+                mgmt_svc = cm.get_service()
+                LOG.info("Restarting management services")
+                mgmt.restart(cm)
+            except ApiException:
+                pass
+            LOG.info("Restarting cluster")
             cluster.restart(cl)
         else:
             LOG.info("Kerberos already enabled")
@@ -89,6 +102,6 @@ if __name__ == "__main__":
         logging.fatal("No configuration file specified")
         sys.exit(-1)
 
-    config = config.read_config(sys.argv[1])
+    conf = config.read_config(sys.argv[1])
 
-    enable_kerberos(config)
+    enable_kerberos(conf)

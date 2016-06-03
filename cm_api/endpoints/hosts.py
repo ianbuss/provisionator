@@ -81,6 +81,8 @@ class ApiHost(BaseApiResource):
     'numCores'          : ROAttr(),
     'numPhysicalCores'  : ROAttr(),
     'totalPhysMemBytes' : ROAttr(),
+    'entityStatus'      : ROAttr(),
+    'clusterRef'        : ROAttr(ApiClusterRef),
   }
 
   def __init__(self, resource_root, hostId=None, hostname=None,

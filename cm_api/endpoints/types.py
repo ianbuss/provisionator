@@ -501,6 +501,7 @@ class ApiCommand(BaseApiObject):
         'children'      : ROAttr(ApiCommand, is_api_list=True),
         'parent'        : ROAttr(ApiCommand),
         'resultDataUrl' : ROAttr(),
+        'canRetry'      : ROAttr(),
       }
     return cls._ATTRIBUTES
 
@@ -567,6 +568,17 @@ class ApiCommand(BaseApiObject):
       return self
 
     path = self._path() + '/abort'
+    resp = self._get_resource_root().post(path)
+    return ApiCommand.from_json_dict(resp, self._get_resource_root())
+
+  def retry(self):
+    """
+    Retry a failed or aborted command.
+    Note: The retry will only work for ClusterUpgrade command for now.
+
+    @return: A new ApiCommand object with the updated information.
+    """
+    path = self._path() + '/retry'
     resp = self._get_resource_root().post(path)
     return ApiCommand.from_json_dict(resp, self._get_resource_root())
 
@@ -659,6 +671,8 @@ class ApiCmPeer(BaseApiObject):
       'url'       : None,
       'username'  : None,
       'password'  : None,
+      'type'      : None,
+      'clouderaManagerCreatedUser' : None,
     }
 
   def __str__(self):
@@ -679,6 +693,8 @@ class ApiHdfsReplicationArguments(BaseApiObject):
     'userName'                  : None,
     'numMaps'                   : None,
     'dryRun'                    : None,
+    'bandwidthPerMap'           : None,
+    'logPath'                   : None,
     'schedulerPoolName'         : None,
     'abortOnError'              : None,
     'preservePermissions'       : None,
@@ -689,6 +705,7 @@ class ApiHdfsReplicationArguments(BaseApiObject):
     'skipTrash'                 : None,
     'replicationStrategy'       : None,
     'preserveXAttrs'            : None,
+    'exclusionFilters'          : None,
   }
 
 class ApiHdfsReplicationResult(BaseApiObject):
@@ -711,6 +728,8 @@ class ApiHdfsReplicationResult(BaseApiObject):
     'jobDetailsUri'       : ROAttr(),
     'dryRun'              : ROAttr(),
     'snapshottedDirs'     : ROAttr(),
+    'failedFiles'         : ROAttr(),
+    'runAsUser'           : ROAttr(),
   }
 
 class ApiHiveTable(BaseApiObject):
@@ -753,6 +772,7 @@ class ApiHiveReplicationResult(BaseApiObject):
     'errors'                : ROAttr(),
     'dataReplicationResult' : ROAttr(ApiHdfsReplicationResult),
     'dryRun'                : ROAttr(),
+    'runAsUser'             : ROAttr(),
     'phase'                 : ROAttr(),
   }
 
@@ -784,6 +804,7 @@ class ApiReplicationSchedule(BaseApiObject):
     'id'              : ROAttr(),
     'nextRun'         : ROAttr(datetime.datetime),
     'history'         : ROAttr(ApiReplicationCommand),
+    'active'          : None
   }
 
 class ApiHBaseSnapshotPolicyArguments(BaseApiObject):
@@ -913,6 +934,7 @@ class ApiSnapshotPolicy(BaseApiObject):
   @ivar alert_on_success: whether to generate alerts on successful completion of snapshot creation/deletion activity.
   @ivar alert_on_fail: whether to generate alerts on failure of snapshot creation/deletion activity.
   @ivar alert_on_abort: whether to generate alerts on abort of snapshot creation/deletion activity.
+  @ivar paused: whether to run the policy on schedule
   @type hbaseArguments: ApiHBaseSnapshotPolicyArguments
   @ivar hbaseArguments: HBase specific arguments for the replication job.
   @type hdfsArguments: ApiHdfsSnapshotPolicyArguments
@@ -936,6 +958,7 @@ class ApiSnapshotPolicy(BaseApiObject):
     'alertOnSuccess'          : None,
     'alertOnFail'             : None,
     'alertOnAbort'            : None,
+    'paused'                  : None,
     'hbaseArguments'          : Attr(ApiHBaseSnapshotPolicyArguments),
     'hdfsArguments'           : Attr(ApiHdfsSnapshotPolicyArguments),
     'lastCommand'             : ROAttr(ApiSnapshotCommand),
@@ -976,15 +999,16 @@ class ApiBatchResponseList(ApiList):
 
 class ApiConfig(BaseApiObject):
   _ATTRIBUTES = {
-    'name'              : None,
-    'value'             : None,
-    'required'          : ROAttr(),
-    'default'           : ROAttr(),
-    'displayName'       : ROAttr(),
-    'description'       : ROAttr(),
-    'relatedName'       : ROAttr(),
-    'validationState'   : ROAttr(),
-    'validationMessage' : ROAttr(),
+    'name'                         : None,
+    'value'                        : None,
+    'required'                     : ROAttr(),
+    'default'                      : ROAttr(),
+    'displayName'                  : ROAttr(),
+    'description'                  : ROAttr(),
+    'relatedName'                  : ROAttr(),
+    'validationState'              : ROAttr(),
+    'validationMessage'            : ROAttr(),
+    'validationWarningsSuppressed' : ROAttr()
   }
 
   def __init__(self, resource_root, name=None, value=None):
@@ -1060,16 +1084,27 @@ class ApiMr2AppInformation(BaseApiObject):
 
 class ApiYarnApplication(BaseApiObject):
   _ATTRIBUTES = {
-    'applicationId'          : ROAttr(),
-    'name'                   : ROAttr(),
-    'user'                   : ROAttr(),
-    'startTime'              : ROAttr(datetime.datetime),
-    'endTime'                : ROAttr(datetime.datetime),
-    'pool'                   : ROAttr(),
-    'state'                  : ROAttr(),
-    'progress'               : ROAttr(),
-    'mr2AppInformation'      : ROAttr(ApiMr2AppInformation),
-    'attributes'             : ROAttr(),
+    'applicationId'                    : ROAttr(),
+    'name'                             : ROAttr(),
+    'user'                             : ROAttr(),
+    'startTime'                        : ROAttr(datetime.datetime),
+    'endTime'                          : ROAttr(datetime.datetime),
+    'pool'                             : ROAttr(),
+    'state'                            : ROAttr(),
+    'progress'                         : ROAttr(),
+    'mr2AppInformation'                : ROAttr(ApiMr2AppInformation),
+    'attributes'                       : ROAttr(),
+    'allocatedMB'                      : ROAttr(),
+    'allocatedVCores'                  : ROAttr(),
+    'runningContainers'                : ROAttr(),
+    'applicationTags'                  : ROAttr(),
+    'allocatedMemorySeconds'           : ROAttr(),
+    'allocatedVcoreSeconds'            : ROAttr(),
+    'containerUsedMemorySeconds'       : ROAttr(),
+    'containerUsedCpuSeconds'          : ROAttr(),
+    'containerUsedVcoreSeconds'        : ROAttr(),
+    'containerAllocatedMemorySeconds'  : ROAttr(),
+    'containerAllocatedVcoreSeconds'   : ROAttr(),
   }
 
   def __str__(self):
@@ -1102,6 +1137,107 @@ class ApiYarnApplicationAttribute(BaseApiObject):
 
   def __str__(self):
     return "<ApiYarnApplicationAttribute> %s" % name
+
+class ApiTimeSeriesRequest(BaseApiObject):
+  _ATTRIBUTES = {
+      'query'                : None,
+      'from'                 : None,
+      'to'                   : None,
+      'contentType'          : None,
+      'desiredRollup'        : None,
+      'mustUseDesiredRollup' : None
+    }
+
+  def __str__(self):
+    return "<ApiTimeSeriesRequest>: %s" % (self.query)
+
+class ApiProductVersion(BaseApiObject):
+  _ATTRIBUTES = {
+    'version'       : None,
+    'product'       : None,
+  }
+
+class ApiClusterTemplateConfig(BaseApiObject):
+  _ATTRIBUTES = {
+    'name'        : None,
+    'value'       : None,
+    'ref'         : None,
+    'variable'    : None,
+    'autoConfig'  : None,
+  }
+
+class ApiClusterTemplateRoleConfigGroup(BaseApiObject):
+  _ATTRIBUTES = {
+    'refName'        : None,
+    'roleType'       : None,
+    'base'           : None,
+    'displayName'    : None,
+    'configs'        : Attr(ApiClusterTemplateConfig),
+  }
+
+class ApiClusterTemplateRole(BaseApiObject):
+  _ATTRIBUTES = {
+    'refName'           : None,
+    'roleType'          : None,
+  }
+
+class ApiClusterTemplateHostTemplate(BaseApiObject):
+  _ATTRIBUTES = {
+    'refName'                   : None,
+    'cardinality'               : None,
+    'roleConfigGroupsRefNames'  : None,
+  }
+
+class ApiClusterTemplateHostInfo(BaseApiObject):
+  _ATTRIBUTES = {
+    'hostName'                  : None,
+    'hostNameRange'             : None,
+    'rackId'                    : None,
+    'hostTemplateRefName'       : None,
+    'roleRefNames'              : None,
+  }
+
+class ApiClusterTemplateVariable(BaseApiObject):
+  _ATTRIBUTES = {
+    'name'         : None,
+    'value'        : None,
+  }
+
+class ApiClusterTemplateRoleConfigGroupInfo(BaseApiObject):
+  _ATTRIBUTES = {
+    'rcgRefName'  : None,
+    'name'        : None,
+  }
+
+class ApiClusterTemplateInstantiator(BaseApiObject):
+  _ATTRIBUTES = {
+    'clusterName'      : None,
+    'hosts'            : Attr(ApiClusterTemplateHostInfo),
+    'variables'        : Attr(ApiClusterTemplateVariable),
+    'roleConfigGroups' : Attr(ApiClusterTemplateRoleConfigGroupInfo),
+  }
+
+class ApiClusterTemplateService(BaseApiObject):
+  _ATTRIBUTES = {
+    'refName'           : None,
+    'serviceType'       : None,
+    'serviceConfigs'    : Attr(ApiClusterTemplateConfig),
+    'roleConfigGroups'  : Attr(ApiClusterTemplateRoleConfigGroup),
+    'displayName'       : None,
+    'roles'             : Attr(ApiClusterTemplateRole),
+  }
+
+class ApiClusterTemplate(BaseApiObject):
+  _ATTRIBUTES = {
+    'cdhVersion'    : None,
+    'displayName'   : None,
+    'cmVersion'     : None,
+    "repositories"  : None,
+    'products'      : Attr(ApiProductVersion),
+    'services'      : Attr(ApiClusterTemplateService),
+    'hostTemplates' : Attr(ApiClusterTemplateHostTemplate),
+    'instantiator'  : Attr(ApiClusterTemplateInstantiator),
+  }
 
 def config_to_api_list(dic):
   """

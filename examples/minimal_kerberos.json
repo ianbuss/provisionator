@@ -1,0 +1,131 @@
+{
+  "cm" : {
+    "host" : "provtest1.hadoop.dev",
+    "user" : "admin",
+    "password" : "admin",
+    "ssl" : false,
+    "kdc_user" : "cloudera-scm/admin@CLOUDERA",
+    "kdc_pass" : "cloudera",
+    "config" : {
+      "REMOTE_PARCEL_REPO_URLS" : "http://provtest1.hadoop.dev/parcelrepo",
+      "KRB_ENC_TYPES" : "aes128-cts-hmac-sha1-96",
+      "MAX_RENEW_LIFE" : "604800",
+      "KRB_RENEW_LIFETIME" : "604800",
+      "SECURITY_REALM" : "CLOUDERA"
+    }
+  },
+  "mgmt" : {
+    "config" : {
+    },
+    "services" : [
+    ]
+  },
+  "cluster" : {
+    "name" : "Provisionator Test Cluster",
+    "version" : "5.7",
+    "hosts" : [
+      "provtest1.hadoop.dev"
+    ],
+    "services" : [
+      {
+        "name" : "ZooKeeper",
+        "type" : "ZOOKEEPER",
+        "roles" : [
+          {
+            "type" : "SERVER",
+            "hosts" : [ "provtest1.hadoop.dev" ],
+            "config" : {
+              "dataDir" : "/var/lib/zookeeper",
+              "dataLogDir" : "/var/lib/zookeeper",
+              "zookeeper_server_java_heapsize" : "536870912"
+            } 
+          }
+        ]
+      },
+      {
+        "name" : "HDFS",
+        "type" : "HDFS",
+        "config" : {
+
+        },
+        "roles" : [
+          {
+            "type" : "NAMENODE",
+            "hosts" : [ "provtest1.hadoop.dev" ],
+            "config" : {
+              "dfs_name_dir_list" : "/dfs/nn",
+              "namenode_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "SECONDARYNAMENODE",
+            "hosts" : [ "provtest1.hadoop.dev" ],
+            "config" : {
+              "fs_checkpoint_dir_list" : "/dfs/snn",
+              "secondary_namenode_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "DATANODE",
+            "hosts" : [ 
+              "provtest1.hadoop.dev"
+            ],
+            "config" : {
+              "dfs_data_dir_list" : "/dfs/dn",
+	          "dfs_datanode_du_reserved" : "2147483648",
+              "datanode_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "GATEWAY",
+            "hosts" : [ 
+              "provtest1.hadoop.dev"
+            ],
+            "config" : {
+              "dfs_client_use_trash" : "true"
+            }
+          }
+        ]
+      },
+      {
+        "name" : "YARN",
+        "type" : "YARN",
+        "config" : {
+          "hdfs_service" : "HDFS"
+        },
+        "roles" : [
+          {
+            "type" : "RESOURCEMANAGER",
+            "hosts" : [ "provtest1.hadoop.dev" ],
+            "config" : {
+              "resource_manager_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "NODEMANAGER",
+            "hosts" : [ 
+              "provtest1.hadoop.dev"
+            ],
+            "config" : {
+              "yarn_nodemanager_local_dirs" : "/yarn/nm",
+              "node_manager_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "JOBHISTORY",
+            "hosts" : [ "provtest1.hadoop.dev" ],
+            "config" : {
+              "mr2_jobhistory_java_heapsize" : "536870912"
+            }
+          },
+          {
+            "type" : "GATEWAY",
+            "hosts" : [ 
+              "provtest1.hadoop.dev"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
