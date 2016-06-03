@@ -22,9 +22,11 @@ __docformat__ = "epytext"
 
 TIME_SERIES_PATH   = "/timeseries"
 METRIC_SCHEMA_PATH = "/timeseries/schema"
+METRIC_ENTITY_TYPE_PATH = "/timeseries/entityTypes"
+METRIC_ENTITY_ATTR_PATH = "/timeseries/entityTypeAttributes"
 
 def query_timeseries(resource_root, query, from_time=None, to_time=None,
-    desired_rollup=None, must_use_desired_rollup=None):
+    desired_rollup=None, must_use_desired_rollup=None, by_post=False):
   """
   Query for time series data from the CM time series data store.
   @param query: Query string.
@@ -45,11 +47,22 @@ def query_timeseries(resource_root, query, from_time=None, to_time=None,
                          must_use_desired_rollup is set to true.
   @param must_use_desired_rollup: Indicates that the monitoring server should
                                   return the data at the rollup desired.
+  @param by_post: If true, an HTTP POST request will be made to server. This
+                  allows longer query string to be accepted compared to HTTP
+                  GET request.
   @return: List of ApiTimeSeriesResponse
   """
+  data = None
   params = {}
-  if query:
+  request_method = resource_root.get
+  if by_post:
+    request = ApiTimeSeriesRequest(resource_root,
+                                   query=query)
+    data = request
+    request_method = resource_root.post
+  elif query:
     params['query'] = query
+
   if from_time:
     params['from'] = from_time.isoformat()
   if to_time:
@@ -58,8 +71,8 @@ def query_timeseries(resource_root, query, from_time=None, to_time=None,
     params['desiredRollup'] = desired_rollup
   if must_use_desired_rollup:
     params['mustUseDesiredRollup'] = must_use_desired_rollup
-  return call(resource_root.get, TIME_SERIES_PATH,
-      ApiTimeSeriesResponse, True, params=params)
+  return call(request_method, TIME_SERIES_PATH,
+      ApiTimeSeriesResponse, True, params=params, data=data)
 
 def get_metric_schema(resource_root):
   """
@@ -69,10 +82,28 @@ def get_metric_schema(resource_root):
   return call(resource_root.get, METRIC_SCHEMA_PATH,
       ApiMetricSchema, True)
 
+def get_entity_types(resource_root):
+  """
+  Get the time series entity types that CM monitors.
+  @return: List of time series entity type.
+  """
+  return call(resource_root.get, METRIC_ENTITY_TYPE_PATH,
+      ApiTimeSeriesEntityType, True)
+
+def get_entity_attributes(resource_root):
+  """
+  Get the time series entity attributes that CM monitors.
+  @return: List of time series entity attribute.
+  """
+  return call(resource_root.get, METRIC_ENTITY_ATTR_PATH,
+      ApiTimeSeriesEntityAttribute, True)
+
 class ApiTimeSeriesCrossEntityMetadata(BaseApiObject):
   _ATTRIBUTES = {
     'maxEntityDisplayName' : ROAttr(),
     'minEntityDisplayName' : ROAttr(),
+    'maxEntityName'        : ROAttr(),
+    'minEntityName'        : ROAttr(),
     'numEntities'          : ROAttr()
     }
 
@@ -139,3 +170,24 @@ class ApiMetricSchema(BaseApiObject):
     'sources'         : ROAttr(),
     }
 
+class ApiTimeSeriesEntityAttribute(BaseApiObject):
+  _ATTRIBUTES = {
+    'name'                 : ROAttr(),
+    'displayName'          : ROAttr(),
+    'description'          : ROAttr(),
+    'isValueCaseSensitive' : ROAttr()
+    }
+
+class ApiTimeSeriesEntityType(BaseApiObject):
+  _ATTRIBUTES = {
+    'name'                        : ROAttr(),
+    'category'                    : ROAttr(),
+    'displayName'                 : ROAttr(),
+    'description'                 : ROAttr(),
+    'nameForCrossEntityAggregateMetrics' : ROAttr(),
+    'immutableAttributeNames'     : ROAttr(),
+    'mutableAttributeNames'       : ROAttr(),
+    'entityNameFormat'            : ROAttr(),
+    'entityDisplayNameForamt'     : ROAttr(),
+    'parentMetricEntityTypeNames' : ROAttr()
+    }

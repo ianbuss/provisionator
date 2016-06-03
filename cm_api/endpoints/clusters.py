@@ -16,6 +16,7 @@
 
 from cm_api.endpoints.types import *
 from cm_api.endpoints import services, parcels, host_templates
+from sys import api_version
 
 __docformat__ = "epytext"
 
@@ -80,8 +81,10 @@ class ApiCluster(BaseApiResource):
     'clusterUrl'        : None,
     'version'           : None,
     'fullVersion'       : None,
+    'hostsUrl'          : ROAttr(),
     'maintenanceMode'   : ROAttr(),
     'maintenanceOwners' : ROAttr(),
+    'entityStatus'      : ROAttr(),
   }
 
   def __init__(self, resource_root, name=None, version=None, fullVersion=None):
@@ -257,7 +260,8 @@ class ApiCluster(BaseApiResource):
     return self._cmd('stop')
 
   def restart(self, restart_only_stale_services=None,
-    redeploy_client_configuration=None):
+    redeploy_client_configuration=None,
+    restart_service_names=None):
     """
     Restart all services in the cluster.
     Services are restarted in the appropriate order given their dependencies.
@@ -268,6 +272,8 @@ class ApiCluster(BaseApiResource):
     @param redeploy_client_configuration: Re-deploy client configuration for
                                           all services in the cluster. Default
                                           is False.
+    @param restart_service_names: Only restart services that are specified and their dependent services.
+                                  Available since API v11.
     @since API v6
 
     @return: Reference to the submitted command.
@@ -278,6 +284,8 @@ class ApiCluster(BaseApiResource):
       args = dict()
       args['restartOnlyStaleServices'] = restart_only_stale_services
       args['redeployClientConfiguration'] = redeploy_client_configuration
+      if self._get_resource_root().version >= 11:
+        args['restartServiceNames'] = restart_service_names
       return self._cmd('restart', data=args, api_version=6)
 
   def deploy_client_config(self):
@@ -527,7 +535,7 @@ class ApiCluster(BaseApiResource):
 
     If using packages, CDH packages on all hosts of the cluster must be
     manually upgraded before this command is issued.
- 
+
     The command will upgrade the services and their configuration to the
     requested version. All running services will be stopped before proceeding,
     unless rolling restart is requested and is available.
@@ -573,3 +581,63 @@ class ApiCluster(BaseApiResource):
           'slaveFailCountThreshold' : slave_fail_count_threshold
         }
     return self._cmd('upgradeCdh', data=args, api_version=6)
+
+  def configure_for_kerberos(self, datanode_transceiver_port=None,
+    datanode_web_port=None):
+    """
+    Command to configure the cluster to use Kerberos for authentication.
+
+    This command will configure all relevant services on a cluster for
+    Kerberos usage.  This command will trigger a GenerateCredentials command
+    to create Kerberos keytabs for all roles in the cluster.
+
+    @param datanode_transceiver_port: The HDFS DataNode transceiver port to use.
+           This will be applied to all DataNode role configuration groups. If
+           not specified, this will default to 1004.
+    @param datanode_web_port: The HDFS DataNode web port to use.  This will be
+           applied to all DataNode role configuration groups. If not specified,
+           this will default to 1006.
+    @return: Reference to the submitted command.
+    @since: API v11
+    """
+    args = dict()
+    if datanode_transceiver_port:
+        args['datanodeTransceiverPort'] = datanode_transceiver_port
+    if datanode_web_port:
+        args['datanodeWebPort'] = datanode_web_port
+    return self._cmd('configureForKerberos', data=args, api_version=11)
+
+  def export(self, export_auto_config=False):
+    """
+    Export the cluster template for the given cluster. ccluster must have host
+    templates defined. It cluster does not have host templates defined it will
+    export host templates based on roles assignment.
+
+    @param export_auto_config: Also export auto configured configs
+    @return: Return cluster template
+    @since: API v12
+    """
+
+    return self._get("export", ApiClusterTemplate, False,
+                     params=dict(exportAutoConfig=export_auto_config), api_version=12)
+
+  def pools_refresh(self):
+    """
+    Refresh Dynamic Pools configurations for relevant services..
+
+    @return: Reference to the submitted command.
+    @since: API v6
+    """
+    return self._cmd('poolsRefresh', api_version=6)
+
+  def list_dfs_services(self, view=None):
+    """
+    List available DFS (distributed file system) services in a cluster.
+    @param view: View to materialize
+    @return: List of available distributed file system services in the cluster.
+    @since: API v12
+    """
+    if view:
+      return self._get_resource_root().get("%s/%s?view=%s" % (self._path(), 'dfsServices', view))
+    else:
+      return self._get_resource_root().get("%s/%s" % (self._path(), 'dfsServices'))

@@ -30,7 +30,7 @@ __docformat__ = "epytext"
 LOG = logging.getLogger(__name__)
 
 API_AUTH_REALM = "Cloudera Manager"
-API_CURRENT_VERSION = 10
+API_CURRENT_VERSION = 12
 
 class ApiException(RestException):
   """
@@ -272,7 +272,7 @@ class ApiResource(Resource):
     resp = self.get(path, params=params)
     return types.ApiList.from_json_dict(resp, self, types.ApiMetric)
 
-  def query_timeseries(self, query, from_time=None, to_time=None):
+  def query_timeseries(self, query, from_time=None, to_time=None, by_post=False):
     """
     Query time series.
     @param query: Query string.
@@ -280,7 +280,7 @@ class ApiResource(Resource):
     @param to_time: End of the period to query (default = now).
     @return: A list of ApiTimeSeriesResponse.
     """
-    return timeseries.query_timeseries(self, query, from_time, to_time)
+    return timeseries.query_timeseries(self, query, from_time, to_time, by_post=by_post)
 
   def get_metric_schema(self):
     """
